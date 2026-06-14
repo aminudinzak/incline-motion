@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulasi Gerak Benda pada Bidang Miring</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    input[type="range"] {
+      accent-color: #2563eb;
+    }
+
+    .value-card {
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+      border-radius: 0.9rem;
+      padding: 0.8rem;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .force-label {
+      font-size: 14px;
+      font-weight: 700;
+      paint-order: stroke;
+      stroke: white;
+      stroke-width: 4px;
+      stroke-linejoin: round;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-slate-50 text-slate-800">
+  <header class="border-b bg-white">
+    <div class="mx-auto max-w-7xl px-4 py-5">
+      <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p class="text-sm font-semibold uppercase tracking-wide text-blue-600">
+            Fisika SMA Kelas XI
+          </p>
+          <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
+            Simulasi Gerak Benda pada Bidang Miring
+          </h1>
+          <p class="mt-1 max-w-3xl text-sm text-slate-600">
+            Ubah massa, sudut, dan gesekan untuk melihat pengaruhnya terhadap gaya, percepatan, kecepatan, dan jarak tempuh benda.
+          </p>
+        </div>
+
+        <div class="rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
+          g = 9,8 m/s²
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto grid max-w-7xl gap-5 px-4 py-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+    <!-- Area simulasi utama -->
+    <section class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div class="mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Visualisasi Simulasi</h2>
+          <p class="text-sm text-slate-500">
+            Garis gaya ditampilkan sebagai vektor pada balok.
+          </p>
+        </div>
+
+        <div id="statusBadge" class="rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">
+          Siap dijalankan
+        </div>
+      </div>
+
+      <div class="overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-sky-50 via-white to-indigo-50">
+        <svg
+          id="simulationSvg"
+          viewBox="0 0 900 520"
+          class="h-[420px] w-full md:h-[540px] lg:h-[620px]"
+          role="img"
+          aria-label="Simulasi bidang miring dengan balok dan garis gaya"
+        >
+          <defs>
+            <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#ef4444"></path>
+            </marker>
+
+            <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#2563eb"></path>
+            </marker>
+
+            <marker id="arrow-amber" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#f59e0b"></path>
+            </marker>
+
+            <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#16a34a"></path>
+            </marker>
+
+            <marker id="arrow-purple" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#7c3aed"></path>
+            </marker>
+
+            <linearGradient id="blockGradient" x1="0" x2="1">
+              <stop offset="0%" stop-color="#60a5fa"></stop>
+              <stop offset="100%" stop-color="#2563eb"></stop>
+            </linearGradient>
+          </defs>
+
+          <!-- Latar -->
+          <rect x="0" y="0" width="900" height="520" fill="transparent"></rect>
+          <line x1="60" y1="410" x2="840" y2="410" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"></line>
+
+          <!-- Bidang miring -->
+          <polygon id="rampFill" points="" fill="#dbeafe" stroke="#93c5fd" stroke-width="2"></polygon>
+          <line id="rampLine" x1="0" y1="0" x2="0" y2="0" stroke="#334155" stroke-width="8" stroke-linecap="round"></line>
+          <line id="rampSurfaceLine" x1="0" y1="0" x2="0" y2="0" stroke="#bfdbfe" stroke-width="3" stroke-linecap="round"></line>
+
+          <!-- Busur sudut -->
+          <path id="angleArc" d="" fill="none" stroke="#2563eb" stroke-width="3"></path>
+          <text id="angleText" x="0" y="0" fill="#1d4ed8" font-size="17" font-weight="700">θ</text>
+
+          <!-- Balok -->
+          <g id="blockGroup">
+            <rect x="-36" y="-24" width="72" height="48" rx="10" fill="url(#blockGradient)" stroke="#1e3a8a" stroke-width="2"></rect>
+            <rect x="-22" y="-12" width="44" height="24" rx="6" fill="rgba(255,255,255,0.18)"></rect>
+            <circle cx="22" cy="0" r="4" fill="#dbeafe"></circle>
+          </g>
+
+          <!-- Vektor gaya -->
+          <line id="arrowW" x1="0" y1="0" x2="0" y2="0" stroke="#ef4444" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-red)"></line>
+          <text id="labelW" class="force-label" x="0" y="0" fill="#ef4444">W</text>
+
+          <line id="arrowN" x1="0" y1="0" x2="0" y2="0" stroke="#2563eb" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-blue)"></line>
+          <text id="labelN" class="force-label" x="0" y="0" fill="#2563eb">N</text>
+
+          <line id="arrowFriction" x1="0" y1="0" x2="0" y2="0" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-amber)"></line>
+          <text id="labelFriction" class="force-label" x="0" y="0" fill="#f59e0b">f</text>
+
+          <line id="arrowWx" x1="0" y1="0" x2="0" y2="0" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-purple)"></line>
+          <text id="labelWx" class="force-label" x="0" y="0" fill="#7c3aed">Wx</text>
+
+          <line id="arrowA" x1="0" y1="0" x2="0" y2="0" stroke="#16a34a" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-green)"></line>
+          <text id="labelA" class="force-label" x="0" y="0" fill="#16a34a">a</text>
+
+          <!-- Keterangan lintasan -->
+          <text x="112" y="455" fill="#64748b" font-size="14" font-weight="600">
+            Lintasan visual mewakili jarak 8 meter
+          </text>
+        </svg>
+      </div>
+
+      <div class="mt-4 grid gap-3 text-sm md:grid-cols-5">
+        <div class="flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-red-700">
+          <span class="h-3 w-3 rounded-full bg-red-500"></span> W = gaya berat
+        </div>
+        <div class="flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-blue-700">
+          <span class="h-3 w-3 rounded-full bg-blue-600"></span> N = gaya normal
+        </div>
+        <div class="flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-amber-700">
+          <span class="h-3 w-3 rounded-full bg-amber-500"></span> f = gaya gesek
+        </div>
+        <div class="flex items-center gap-2 rounded-xl bg-violet-50 px-3 py-2 text-violet-700">
+          <span class="h-3 w-3 rounded-full bg-violet-600"></span> Wx = sejajar bidang
+        </div>
+        <div class="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-emerald-700">
+          <span class="h-3 w-3 rounded-full bg-emerald-600"></span> a = percepatan
+        </div>
+      </div>
+    </section>
+
+    <!-- Panel kanan -->
+    <aside class="space-y-5">
+      <!-- Kontrol -->
+      <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-900">Kontrol Variabel</h2>
+        <p class="mt-1 text-sm text-slate-500">
+          Mengubah variabel akan mengatur ulang gerak dari posisi awal.
+        </p>
+
+        <div class="mt-5 space-y-5">
+          <div>
+            <div class="mb-2 flex items-center justify-between">
+              <label for="massInput" class="text-sm font-semibold text-slate-700">Massa benda</label>
+              <span id="massValue" class="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold">5,0 kg</span>
+            </div>
+            <input id="massInput" type="range" min="1" max="20" step="0.1" value="5" class="w-full" />
+          </div>
+
+          <div>
+            <div class="mb-2 flex items-center justify-between">
+              <label for="angleInput" class="text-sm font-semibold text-slate-700">Sudut kemiringan</label>
+              <span id="angleValue" class="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold">25°</span>
+            </div>
+            <input id="angleInput" type="range" min="5" max="60" step="1" value="25" class="w-full" />
+          </div>
+
+          <div>
+            <label for="surfaceInput" class="mb-2 block text-sm font-semibold text-slate-700">Jenis permukaan</label>
+            <select id="surfaceInput" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+              <option value="0">Tanpa gesekan</option>
+              <option value="0.10" selected>Halus</option>
+              <option value="0.35">Kasar</option>
+              <option value="custom">Kustom dari slider μ</option>
+            </select>
+          </div>
+
+          <div>
+            <div class="mb-2 flex items-center justify-between">
+              <label for="muInput" class="text-sm font-semibold text-slate-700">Koefisien gesek μ</label>
+              <span id="muValue" class="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold">0,10</span>
+            </div>
+            <input id="muInput" type="range" min="0" max="0.8" step="0.01" value="0.10" class="w-full" />
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 pt-2">
+            <button id="playBtn" class="rounded-xl bg-blue-600 px-3 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98]">
+              Play
+            </button>
+            <button id="pauseBtn" class="rounded-xl bg-slate-200 px-3 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-300 active:scale-[0.98]">
+              Pause
+            </button>
+            <button id="resetBtn" class="rounded-xl bg-rose-100 px-3 py-3 text-sm font-bold text-rose-700 transition hover:bg-rose-200 active:scale-[0.98]">
+              Reset
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel hasil -->
+      <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-900">Hasil Perhitungan</h2>
+
+        <div class="mt-4 grid grid-cols-2 gap-3">
+          <div class="value-card">
+            <p class="text-xs font-semibold text-slate-500">Massa</p>
+            <p id="resultMass" class="mt-1 text-lg font-extrabold text-slate-900">-</p>
+          </div>
+
+          <div class="value-card">
+            <p class="text-xs font-semibold text-slate-500">Sudut</p>
+            <p id="resultAngle" class="mt-1 text-lg font-extrabold text-slate-900">-</p>
+          </div>
+
+          <div class="value-card">
+            <p class="text-xs font-semibold text-slate-500">Gaya berat W</p>
+            <p id="resultWeight" class="mt-1 text-lg font-extrabold text-red-600">-</p>
+          </div>
+
+          <div class="value-card">
+            <p class="text-xs font-semibold text-slate-500">Gaya normal N</p>
+            <p id="resultNormal" class="mt-1 text-lg font-extrabold text-blue-600">-</p>
+          </div>
+
+          <div class="value-card">
+            <p class="text-xs font-semibold text-slate-500">Gaya gesek f</p>
+            <p id="resultFriction" class="mt-1 text-lg font-extrabold text-amber-600">-</p>
+          </div>
+
+          <div class="value-card">
+            <p class="text-xs font-semibold text-slate-500">Percepatan a</p>
+            <p id="resultAcceleration" class="mt-1 text-lg font-extrabold text-emerald-600">-</p>
+          </div>
+
+          <div class="value-card">
+            <p class="text-xs font-semibold text-slate-500">Waktu t</p>
+            <p id="resultTime" class="mt-1 text-lg font-extrabold text-slate-900">-</p>
+          </div>
+
+          <div class="value-card">
+            <p class="text-xs font-semibold text-slate-500">Kecepatan v</p>
+            <p id="resultVelocity" class="mt-1 text-lg font-extrabold text-slate-900">-</p>
+          </div>
+
+          <div class="value-card col-span-2">
+            <p class="text-xs font-semibold text-slate-500">Jarak tempuh s</p>
+            <p id="resultDistance" class="mt-1 text-lg font-extrabold text-slate-900">-</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Rumus -->
+      <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-900">Rumus Fisika</h2>
+        <div class="mt-3 space-y-2 text-sm text-slate-700">
+          <p><strong>Gaya berat:</strong> W = m × g</p>
+          <p><strong>Komponen sejajar bidang:</strong> Wx = m × g × sin θ</p>
+          <p><strong>Gaya normal:</strong> N = m × g × cos θ</p>
+          <p><strong>Gaya gesek:</strong> f = μ × N</p>
+          <p><strong>Resultan gaya:</strong> Fnet = Wx − f</p>
+          <p><strong>Percepatan:</strong> a = Fnet / m</p>
+          <p class="rounded-xl bg-blue-50 p-3 text-blue-800">
+            Jika f ≥ Wx, resultan gaya efektif dianggap 0 sehingga benda tidak bergerak.
+          </p>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    // =====================================================
+    // Simulasi bidang miring
+    // Model: gerak 1D sepanjang bidang miring
+    // Satuan fisika: kg, meter, sekon, Newton
+    // Visualisasi: SVG
+    // =====================================================
+
+    const G = 9.8;               // percepatan gravitasi, m/s^2
+    const TRACK_LENGTH_M = 8;    // panjang lintasan virtual dalam meter
+
+    const state = {
+      mass: 5,
+      angleDeg: 25,
+      mu: 0.10,
+      time: 0,
+      velocity: 0,
+      distance: 0,
+      running: false,
+      lastTimestamp: null
+    };
+
+    const el = (id) => document.getElementById(id);
+
+    const elements = {
+      massInput: el("massInput"),
+      angleInput: el("angleInput"),
+      muInput: el("muInput"),
+      surfaceInput: el("surfaceInput"),
+
+      massValue: el("massValue"),
+      angleValue: el("angleValue"),
+      muValue: el("muValue"),
+
+      playBtn: el("playBtn"),
+      pauseBtn: el("pauseBtn"),
+      resetBtn: el("resetBtn"),
+
+      statusBadge: el("statusBadge"),
+
+      resultMass: el("resultMass"),
+      resultAngle: el("resultAngle"),
+      resultWeight: el("resultWeight"),
+      resultNormal: el("resultNormal"),
+      resultFriction: el("resultFriction"),
+      resultAcceleration: el("resultAcceleration"),
+      resultTime: el("resultTime"),
+      resultVelocity: el("resultVelocity"),
+      resultDistance: el("resultDistance"),
+
+      rampFill: el("rampFill"),
+      rampLine: el("rampLine"),
+      rampSurfaceLine: el("rampSurfaceLine"),
+      angleArc: el("angleArc"),
+      angleText: el("angleText"),
+      blockGroup: el("blockGroup"),
+
+      arrowW: el("arrowW"),
+      labelW: el("labelW"),
+      arrowN: el("arrowN"),
+      labelN: el("labelN"),
+      arrowFriction: el("arrowFriction"),
+      labelFriction: el("labelFriction"),
+      arrowWx: el("arrowWx"),
+      labelWx: el("labelWx"),
+      arrowA: el("arrowA"),
+      labelA: el("labelA")
+    };
+
+    function toComma(number, digits = 2) {
+      return Number(number).toFixed(digits).replace(".", ",");
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function readInputs() {
+      state.mass = parseFloat(elements.massInput.value);
+      state.angleDeg = parseFloat(elements.angleInput.value);
+      state.mu = parseFloat(elements.muInput.value);
+    }
+
+    function calculatePhysics() {
+      const theta = state.angleDeg * Math.PI / 180;
+
+      const weight = state.mass * G;
+      const weightParallel = state.mass * G * Math.sin(theta);
+      const normal = state.mass * G * Math.cos(theta);
+      const friction = state.mu * normal;
+      const netForceRaw = weightParallel - friction;
+
+      // Jika gaya gesek menahan gerak, resultan efektif dibuat 0.
+      const canMove = netForceRaw > 0.000001;
+      const netForceEffective = canMove ? netForceRaw : 0;
+      const acceleration = netForceEffective / state.mass;
+
+      return {
+        theta,
+        weight,
+        weightParallel,
+        normal,
+        friction,
+        netForceRaw,
+        netForceEffective,
+        acceleration,
+        canMove
+      };
+    }
+
+    function setStatus(text, type = "ready") {
+      const base = "rounded-full px-4 py-2 text-sm font-semibold";
+
+      const styles = {
+        ready: "bg-emerald-50 text-emerald-700",
+        running: "bg-blue-50 text-blue-700",
+        pause: "bg-slate-100 text-slate-700",
+        stop: "bg-amber-50 text-amber-700",
+        reset: "bg-rose-50 text-rose-700"
+      };
+
+      elements.statusBadge.className = `${base} ${styles[type] || styles.ready}`;
+      elements.statusBadge.textContent = text;
+    }
+
+    function setLine(line, x1, y1, x2, y2, visible = true) {
+      line.setAttribute("x1", x1);
+      line.setAttribute("y1", y1);
+      line.setAttribute("x2", x2);
+      line.setAttribute("y2", y2);
+      line.style.display = visible ? "block" : "none";
+    }
+
+    function setLabel(label, x, y, text, visible = true) {
+      label.setAttribute("x", x);
+      label.setAttribute("y", y);
+      label.textContent = text;
+      label.style.display = visible ? "block" : "none";
+    }
+
+    function updateInputLabels() {
+      elements.massValue.textContent = `${toComma(state.mass, 1)} kg`;
+      elements.angleValue.textContent = `${toComma(state.angleDeg, 0)}°`;
+      elements.muValue.textContent = toComma(state.mu, 2);
+    }
+
+    function updateResultPanel(physics) {
+      elements.resultMass.textContent = `${toComma(state.mass, 1)} kg`;
+      elements.resultAngle.textContent = `${toComma(state.angleDeg, 0)}°`;
+      elements.resultWeight.textContent = `${toComma(physics.weight, 2)} N`;
+      elements.resultNormal.textContent = `${toComma(physics.normal, 2)} N`;
+      elements.resultFriction.textContent = `${toComma(physics.friction, 2)} N`;
+      elements.resultAcceleration.textContent = `${toComma(physics.acceleration, 3)} m/s²`;
+      elements.resultTime.textContent = `${toComma(state.time, 3)} s`;
+      elements.resultVelocity.textContent = `${toComma(state.velocity, 3)} m/s`;
+      elements.resultDistance.textContent = `${toComma(state.distance, 3)} m`;
+    }
+
+    function updateSvg(physics) {
+      // Titik dasar visual bidang miring
+      const baseX = 115;
+      const baseY = 410;
+      const rampLengthPx = 620;
+
+      const theta = physics.theta;
+      const cos = Math.cos(theta);
+      const sin = Math.sin(theta);
+
+      // Bidang miring naik ke kanan.
+      const topX = baseX + rampLengthPx * cos;
+      const topY = baseY - rampLengthPx * sin;
+
+      elements.rampFill.setAttribute(
+        "points",
+        `${baseX},${baseY} ${topX},${topY} ${topX},${baseY}`
+      );
+
+      elements.rampLine.setAttribute("x1", baseX);
+      elements.rampLine.setAttribute("y1", baseY);
+      elements.rampLine.setAttribute("x2", topX);
+      elements.rampLine.setAttribute("y2", topY);
+
+      elements.rampSurfaceLine.setAttribute("x1", baseX + 8 * cos);
+      elements.rampSurfaceLine.setAttribute("y1", baseY - 8 * sin);
+      elements.rampSurfaceLine.setAttribute("x2", topX - 8 * cos);
+      elements.rampSurfaceLine.setAttribute("y2", topY + 8 * sin);
+
+      // Busur sudut
+      const arcR = 72;
+      const arcEndX = baseX + arcR * cos;
+      const arcEndY = baseY - arcR * sin;
+      elements.angleArc.setAttribute(
+        "d",
+        `M ${baseX + arcR} ${baseY} A ${arcR} ${arcR} 0 0 0 ${arcEndX} ${arcEndY}`
+      );
+
+      elements.angleText.setAttribute("x", baseX + 88 * Math.cos(theta / 2));
+      elements.angleText.setAttribute("y", baseY - 88 * Math.sin(theta / 2) + 6);
+      elements.angleText.textContent = `${toComma(state.angleDeg, 0)}°`;
+
+      // Arah sepanjang bidang
+      // upSlope: ke atas bidang, kanan-atas
+      // downSlope: turun bidang, kiri-bawah
+      const upSlope = { x: cos, y: -sin };
+      const downSlope = { x: -cos, y: sin };
+
+      // Normal keluar bidang
+      const normalDir = { x: -sin, y: -cos };
+
+      // Posisi balok dihitung dari ujung atas ke bawah bidang.
+      const progress = clamp(state.distance / TRACK_LENGTH_M, 0, 1);
+      const usablePx = rampLengthPx - 110;
+      const blockAlongFromTop = 45 + progress * usablePx;
+
+      const centerX = topX + downSlope.x * blockAlongFromTop + normalDir.x * 33;
+      const centerY = topY + downSlope.y * blockAlongFromTop + normalDir.y * 33;
+
+      elements.blockGroup.setAttribute(
+        "transform",
+        `translate(${centerX} ${centerY}) rotate(${-state.angleDeg})`
+      );
+
+      // Skala panjang panah agar tetap terbaca.
+        const weightLen = clamp(physics.weight / 1.8, 42, 145);
+        const normalLen = clamp(physics.normal / 1.8, 35, 135);
+        const wxLen = clamp(physics.weightParallel / 1.8, 30, 135);
+        const frictionLen = physics.friction > 0.01 ? clamp(physics.friction / 1.5, 25, 125) : 0;
+        const accelerationLen = physics.acceleration > 0.001 ? clamp(physics.acceleration * 28, 32, 125) : 0;
+
+      // Gaya berat: vertikal ke bawah
+      setLine(
+        elements.arrowW,
+        centerX,
+        centerY,
+        centerX,
+        centerY + weightLen,
+        true
+      );
+      setLabel(elements.labelW, centerX + 12, centerY + weightLen + 6, "W", true);
+
+      // Gaya normal: tegak lurus bidang
+      setLine(
+        elements.arrowN,
+        centerX,
+        centerY,
+        centerX + normalDir.x * normalLen,
+        centerY + normalDir.y * normalLen,
+        true
+      );
+      setLabel(
+        elements.labelN,
+        centerX + normalDir.x * normalLen - 12,
+        centerY + normalDir.y * normalLen - 10,
+        "N",
+        true
+      );
+
+      // Gaya gesek: berlawanan dengan kecenderungan gerak, yaitu ke atas bidang.
+      setLine(
+        elements.arrowFriction,
+        centerX,
+        centerY,
+        centerX + upSlope.x * frictionLen,
+        centerY + upSlope.y * frictionLen,
+        frictionLen > 0
+      );
+      setLabel(
+        elements.labelFriction,
+        centerX + upSlope.x * frictionLen + 8,
+        centerY + upSlope.y * frictionLen - 6,
+        "f",
+        frictionLen > 0
+      );
+
+      // Komponen gaya berat sejajar bidang: turun bidang
+      setLine(
+        elements.arrowWx,
+        centerX,
+        centerY,
+        centerX + downSlope.x * wxLen,
+        centerY + downSlope.y * wxLen,
+        true
+      );
+      setLabel(
+        elements.labelWx,
+        centerX + downSlope.x * wxLen - 38,
+        centerY + downSlope.y * wxLen + 18,
+        "Wx",
+        true
+      );
+
+      // Percepatan: turun bidang jika benda bergerak
+      setLine(
+        elements.arrowA,
+        centerX,
+        centerY - 32,
+        centerX + downSlope.x * accelerationLen,
+        centerY - 32 + downSlope.y * accelerationLen,
+        accelerationLen > 0
+      );
+      setLabel(
+        elements.labelA,
+        centerX + downSlope.x * accelerationLen - 18,
+        centerY - 32 + downSlope.y * accelerationLen - 8,
+        "a",
+        accelerationLen > 0
+      );
+    }
+
+    function updateAll() {
+      readInputs();
+      const physics = calculatePhysics();
+      updateInputLabels();
+      updateResultPanel(physics);
+      updateSvg(physics);
+
+      if (!state.running && state.distance === 0 && !physics.canMove) {
+        setStatus("Benda diam: gaya gesek ≥ komponen berat", "stop");
+      }
+
+      return physics;
+    }
+
+    function resetMotion(statusText = "Simulasi direset") {
+      state.time = 0;
+      state.velocity = 0;
+      state.distance = 0;
+      state.running = false;
+      state.lastTimestamp = null;
+
+      updateAll();
+      setStatus(statusText, "reset");
+    }
+
+    function playSimulation() {
+      const physics = updateAll();
+
+      if (!physics.canMove) {
+        state.running = false;
+        state.lastTimestamp = null;
+        state.time = 0;
+        state.velocity = 0;
+        state.distance = 0;
+        updateAll();
+        setStatus("Tidak bergerak: f ≥ Wx", "stop");
+        return;
+      }
+
+      if (state.distance >= TRACK_LENGTH_M) {
+        state.time = 0;
+        state.velocity = 0;
+        state.distance = 0;
+      }
+
+      state.running = true;
+      state.lastTimestamp = null;
+      setStatus("Simulasi berjalan", "running");
+      requestAnimationFrame(animate);
+    }
+
+    function pauseSimulation() {
+      state.running = false;
+      state.lastTimestamp = null;
+      setStatus("Simulasi dijeda", "pause");
+    }
+
+    function animate(timestamp) {
+      if (!state.running) return;
+
+      const physics = calculatePhysics();
+
+      if (!physics.canMove) {
+        state.running = false;
+        state.velocity = 0;
+        setStatus("Benda berhenti: gaya gesek menahan gerak", "stop");
+        updateAll();
+        return;
+      }
+
+      if (state.lastTimestamp === null) {
+        state.lastTimestamp = timestamp;
+        requestAnimationFrame(animate);
+        return;
+      }
+
+      const dt = Math.min((timestamp - state.lastTimestamp) / 1000, 0.05);
+      state.lastTimestamp = timestamp;
+
+      // Persamaan gerak dipercepat beraturan:
+      // s = s0 + v0*dt + 1/2*a*dt^2
+      // v = v0 + a*dt
+      state.distance += state.velocity * dt + 0.5 * physics.acceleration * dt * dt;
+      state.velocity += physics.acceleration * dt;
+      state.time += dt;
+
+      if (state.distance >= TRACK_LENGTH_M) {
+        state.distance = TRACK_LENGTH_M;
+        state.running = false;
+        state.lastTimestamp = null;
+        setStatus("Balok mencapai ujung bidang", "stop");
+        updateAll();
+        return;
+      }
+
+      updateAll();
+      requestAnimationFrame(animate);
+    }
+
+    // Event: kontrol input
+    elements.massInput.addEventListener("input", () => {
+      resetMotion("Massa diubah, simulasi direset");
+    });
+
+    elements.angleInput.addEventListener("input", () => {
+      resetMotion("Sudut diubah, simulasi direset");
+    });
+
+    elements.muInput.addEventListener("input", () => {
+      elements.surfaceInput.value = "custom";
+      resetMotion("Koefisien gesek diubah, simulasi direset");
+    });
+
+    elements.surfaceInput.addEventListener("change", () => {
+      const value = elements.surfaceInput.value;
+
+      if (value !== "custom") {
+        elements.muInput.value = value;
+      }
+
+      resetMotion("Jenis permukaan diubah, simulasi direset");
+    });
+
+    // Event: tombol
+    elements.playBtn.addEventListener("click", playSimulation);
+    elements.pauseBtn.addEventListener("click", pauseSimulation);
+    elements.resetBtn.addEventListener("click", () => {
+      resetMotion("Simulasi direset");
+      setStatus("Siap dijalankan", "ready");
+    });
+
+    // Inisialisasi awal
+    updateAll();
+    setStatus("Siap dijalankan", "ready");
+  </script>
+</body>
+</html>
